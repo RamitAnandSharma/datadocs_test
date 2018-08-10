@@ -1,0 +1,26 @@
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'docker'
+VAGRANTFILE_API_VERSION         = '2'
+ENV['LC_ALL']                   = 'en_US.UTF-8'
+
+Vagrant.configure( VAGRANTFILE_API_VERSION ) do |config|
+  config.vm.define "app" do |app|
+    app.vm.provider "docker" do |docker|
+       docker.build_dir = "./app"
+       docker.name = "app"
+       docker.build_args = [ '-t', 'app' ]
+    end
+  end
+
+  config.vm.define "db" do |db|
+    db.vm.provider "docker" do |docker|
+      docker.build_dir = "./postgres"
+      docker.name = "postgres"
+      docker.env = {
+        "POSTGRES_PASSWORD": "user",
+        "POSTGRES_USER": "user",
+        "POSTGRES_DB": "dataparse"
+      }
+      docker.build_args = [ '-t', 'postgres' ]
+    end
+  end
+end

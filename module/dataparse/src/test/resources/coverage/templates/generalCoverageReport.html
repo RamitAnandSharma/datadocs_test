@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tests Report</title>
+</head>
+
+<style>
+
+    body, html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+
+        background: #FBFBFB;
+    }
+
+    #page-content {
+        box-sizing: border-box;
+        overflow: auto;
+
+        width: 100%;
+        height: 100%;
+
+        padding: 1rem;
+        box-shadow: 3px 2px 5px 3px #333;
+    }
+
+    #page-heading, .test-name-heading {
+        text-align: center;
+    }
+
+    .test-report-section {
+        padding: 1.5rem;
+        box-shadow: 3px 1px 5px 3px gray;
+        margin-bottom: 2rem;
+    }
+
+    .test-report-section table {
+        width: 100% !important;
+    }
+
+    <!-- table template -->
+
+    table {
+        *border-collapse: collapse; /* IE7 and lower */
+        border-spacing: 0;
+    }
+
+    .bordered-table {
+        border: solid #ccc 1px;
+        -moz-border-radius: 6px;
+        -webkit-border-radius: 6px;
+        border-radius: 6px;
+        -webkit-box-shadow: 0 1px 1px #ccc;
+        -moz-box-shadow: 0 1px 1px #ccc;
+        box-shadow: 0 1px 1px #ccc;
+        margin-bottom: 1.5rem;
+    }
+
+    .bordered-table tr:hover {
+        background: #fbf8e9;
+        -o-transition: all 0.1s ease-in-out;
+        -webkit-transition: all 0.1s ease-in-out;
+        -moz-transition: all 0.1s ease-in-out;
+        -ms-transition: all 0.1s ease-in-out;
+        transition: all 0.1s ease-in-out;
+    }
+
+    .bordered-table td, .bordered-table th {
+        border-left: 1px solid #ccc;
+        border-top: 1px solid #ccc;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .bordered-table th {
+        background-color: #dce9f9;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
+        background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
+        background-image:    -moz-linear-gradient(top, #ebf3fc, #dce9f9);
+        background-image:     -ms-linear-gradient(top, #ebf3fc, #dce9f9);
+        background-image:      -o-linear-gradient(top, #ebf3fc, #dce9f9);
+        background-image:         linear-gradient(top, #ebf3fc, #dce9f9);
+        -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+        -moz-box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
+        box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+        border-top: none;
+        text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    }
+
+    .bordered-table td:first-child, .bordered-table th:first-child {
+        border-left: none;
+    }
+
+    .bordered-table th:first-child {
+        -moz-border-radius: 6px 0 0 0;
+        -webkit-border-radius: 6px 0 0 0;
+        border-radius: 6px 0 0 0;
+    }
+
+    .bordered-table th:last-child {
+        -moz-border-radius: 0 6px 0 0;
+        -webkit-border-radius: 0 6px 0 0;
+        border-radius: 0 6px 0 0;
+    }
+
+    .bordered-table th:only-child{
+        -moz-border-radius: 6px 6px 0 0;
+        -webkit-border-radius: 6px 6px 0 0;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .bordered-table tr:last-child td:first-child {
+        -moz-border-radius: 0 0 0 6px;
+        -webkit-border-radius: 0 0 0 6px;
+        border-radius: 0 0 0 6px;
+    }
+
+    .bordered-table tr:last-child td:last-child {
+        -moz-border-radius: 0 0 6px 0;
+        -webkit-border-radius: 0 0 6px 0;
+        border-radius: 0 0 6px 0;
+    }
+
+    <!-- utils -->
+    .space-bottom {margin-bottom: 1.5rem !important;}
+    .value-cell {width: 10% !important;}
+    .half-table-cell {width: 50% !important;}
+    .small-value-cell {width: 5% !important;}
+    .large-value-cell {width: 20% !important;}
+    .description-cell {width: 90% !important;}
+    .text-center {text-align: center !important;}
+
+</style>
+
+
+<body>
+
+<div id="page-content">
+
+    <div class="test-report-section">
+
+        <!-- Report heading -->
+        <h1 id="page-heading" th:text="${'Coverage testing report @ ' + reportCreated }"></h1>
+
+        <!-- General report statistics -->
+        <h3>Statistics:</h3>
+        <table class="bordered-table space-bottom">
+            <tbody>
+
+            <tr>
+                <td class="description-cell">Status: </td>
+                <td th:text="${testStatistics.get('failedTotal') == '0'} ? 'OK' : 'FAILED'" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Tests: </td>
+                <td th:text="${testStatistics.get('testsTotal')}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Passed: </td>
+                <td th:text="${testStatistics.get('succeededTotal')}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Failed: </td>
+                <td th:text="${testStatistics.get('failedTotal')}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Duration: </td>
+                <td th:text="${testStatistics.get('durationTotal')}"
+                    class="value-cell text-center"></td>
+            </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+
+    <!-- Each report section-->
+    <div th:each="testKey:${testKeys}" class="test-report-section">
+
+        <h2 th:text="${testKey}" class="test-name-heading"></h2>
+
+        <!-- Test statistics -->
+        <h3>Statistics:</h3>
+        <table class="bordered-table space-bottom">
+            <tbody>
+
+            <tr>
+                <td class="description-cell">Status: </td>
+                <td th:text="${testResults.get(testKey).isSucceeded()} ? 'OK' : 'FAILED'" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Steps: </td>
+                <td th:text="${testResults.get(testKey).getSubTestsTotal()}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Passed: </td>
+                <td th:text="${testResults.get(testKey).getSucceededTotal()}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Failed: </td>
+                <td th:text="${testResults.get(testKey).getFailedTotal()}" class="value-cell text-center"></td>
+            </tr>
+
+            <tr>
+                <td class="description-cell">Duration: </td>
+                <td th:text="${testResults.get(testKey).getHumanizedDuration()}" class="value-cell text-center"></td>
+            </tr>
+
+            </tbody>
+        </table>
+
+        <!-- Steps details -->
+        <h3>Progress:</h3>
+        <table class="bordered-table space-bottom">
+
+            <thead>
+            <tr>
+                <th class="small-value-cell text-center">Result</th>
+                <th>Step(sub-test)</th>
+                <th>Description</th>
+                <th class="small-value-cell text-center">Duration</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <th:block th:each="subTestResult : ${testResults.get(testKey).getSubTests()}">
+                <tr>
+                    <td th:text="${subTestResult.getSucceeded()} ? 'OK' : 'FAILED'" class="text-center">OK</td>
+                    <td th:text="${subTestResult.getName()}"></td>
+                    <td th:text="${subTestResult.getDescription()}"></td>
+                    <td th:text="${subTestResult.getHumanizedDuration()}" class="text-center"></td>
+                </tr>
+            </th:block>
+
+            </tbody>
+        </table>
+
+        <th:block th:if="not ${testResults.get(testKey).isSucceeded()}">
+
+            <!-- Error details [appearing only on failed tests] -->
+            <h3>Fail details:</h3>
+            <table class="bordered-table space-bottom">
+
+                <thead>
+                <tr>
+                    <th>Step(sub-test)</th>
+                    <th>Error</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <th:block th:each="subTestResult : ${testResults.get(testKey).getSubTests()}">
+                    <tr th:if="not ${subTestResult.getSucceeded()} ">
+                        <td th:text="${subTestResult.getName()}" class="half-table-cell"></td>
+                        <td th:text="${subTestResult.getDescription()}" class="half-table-cell text-center"></td>
+                    </tr>
+                </th:block>
+
+                </tbody>
+
+            </table>
+        </th:block>
+
+    </div>
+</div>
+
+</body>
+
+</html>

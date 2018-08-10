@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<person>
+    <row>
+        <name>Tom</name>
+        <addresses>
+            <Address zip="12345">
+                <State>California</State>
+                <City>Los angeles</City>
+            </Address>
+            <Address zip="45678">
+                <State>California</State>
+                <City>San Francisco</City>
+            </Address>
+        </addresses>
+    </row>
+    <row>
+        <name>Jim</name>
+        <addresses>
+            <Address zip="54321">
+                <State>NY</State>
+                <City>New York</City>
+            </Address>
+        </addresses>
+    </row>
+</person>

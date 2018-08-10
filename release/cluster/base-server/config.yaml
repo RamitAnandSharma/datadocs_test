@@ -1,0 +1,22 @@
+---
+configs:
+  use: 'virtualbox'
+  virtualbox:
+    app:
+      memory: 1024
+      public_ip: '192.168.5.200'
+    postgres:
+      memory: 512
+      public_ip: '192.168.5.201'
+    mongodb:
+      memory: 512
+      public_ip: '192.168.5.202'
+    rabbitmq:
+      memory: 512
+      public_ip: '192.168.5.203'
+    nginx:
+      memory: 512
+      public_ip: '192.168.5.204'
+    elasticsearch:
+      memory: 1024
+      public_ip: '192.168.5.205'

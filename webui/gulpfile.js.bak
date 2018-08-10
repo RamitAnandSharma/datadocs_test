@@ -1,0 +1,212 @@
+const gulp = require('gulp');
+const concatCss = require('gulp-concat-css');
+const cleanCss = require('gulp-clean-css');
+const exec = require('gulp-exec');
+const rename = require('gulp-rename');
+const sass = require('gulp-sass');
+const change = require('gulp-change');
+const es = require('event-stream');
+const clean = require('gulp-clean');
+const gulpsync = require('gulp-sync')(gulp);
+const git = require('git-rev');
+const dateFormat = require('dateformat');
+const templateCache = require('gulp-angular-templatecache');
+const htmlmin = require('gulp-htmlmin');
+const sourcemaps = require('gulp-sourcemaps');
+const babel = require('gulp-babel');
+
+const assetsPath = "./src/";
+
+let watching = false;
+function swallowError (error) {
+  if(watching) {
+    console.log(error.toString());
+    this.emit('end');
+  } else {
+    throw error;
+  }
+}
+
+function changeCssPath(content){
+  return content.replace(/static\/build\/css\/build\.css/g, 'static/css/build.css');
+}
+
+function setCacheTime(content){
+  return content.replace(/%timestamp%/g, Math.round(new Date().getTime() / 1000));
+}
+
+function setDeploymentInfo(content, done){
+  git.short(function (rev) {
+    content = content.replace(/%revision%/g, rev).replace(/%upload-date%/g, dateFormat());
+    done(null, content)
+  });
+}
+
+gulp.task('copy-fonts', function(){
+    // copy fonts into build dir
+    gulp.src([assetsPath + 'css/lib/**/*.{ttf,woff,woff2,eot,svg}'])
+        .pipe(rename({dirname: ''}))
+        .pipe(gulp.dest(assetsPath + 'build/css/'));
+});
+
+gulp.task('copy-files', ['copy-fonts'], function(){
+    return es.merge(
+        // copy excluded libs into build dir
+        gulp.src([assetsPath + 'js/lib/html2canvas.js'])
+            .pipe(gulp.dest(assetsPath + 'build/js/lib/')),
+        // copy other resources
+        gulp.src([assetsPath + '/**/*',
+            '!' + assetsPath + "/build",
+            '!' + assetsPath + "/css",
+            '!' + assetsPath + "/js",
+            '!' + assetsPath + "/fonts",
+            '!' + assetsPath + "/build/**",
+            '!' + assetsPath + "/css/**",
+            '!' + assetsPath + "/js/**",
+            '!' + assetsPath + "/fonts/**"])
+            .pipe(gulp.dest(assetsPath + 'build'))
+    )
+});
+
+gulp.task('edit-files', function(){
+    // change path to css in index.html and embed.html
+    gulp.src([assetsPath + 'build/index.html',
+              assetsPath + 'build/embed.html'])
+        .pipe(change(changeCssPath))
+        .pipe(change(setCacheTime))
+        .pipe(gulp.dest(assetsPath + 'build/'));
+    gulp.src([assetsPath + 'build/templates/auth/login.html'])
+        .pipe(change(setDeploymentInfo))
+        .pipe(gulp.dest(assetsPath + 'build/templates/auth'));
+});
+
+gulp.task('preset-modules-timestamp', function() {
+    // set timestamp-based parameter to add to script paths (clears cache)
+    gulp.src(assetsPath + 'build/js/main.js')
+        .pipe(change(setCacheTime))
+        .pipe(gulp.dest(assetsPath + 'build/js/'))
+});
+
+gulp.task('sass', function () {
+  return gulp.src(assetsPath + 'css/sass/**/*.scss')
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest(assetsPath + 'build/css/'));
+});
+
+gulp.task('css', ['sass'], function () {
+    return gulp.src([assetsPath + 'css/lib/**/*.css', assetsPath + 'css/custom/**/*.css', assetsPath + 'build/css/main.css'])
+        .pipe(concatCss('build.css'))
+        .on('error', swallowError)
+        .pipe(cleanCss({ level: 2 }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/css/'));
+});
+
+gulp.task('clean', function () {
+    return gulp.src(assetsPath + 'build', {read: false})
+        .pipe(clean());
+});
+
+gulp.task('js', function () {
+    return gulp.src('.')
+        .pipe(exec('./node_modules/requirejs/bin/r.js -o rconfig.js'));
+});
+
+gulp.task("babel", function () {
+    return gulp.src([assetsPath + 'build/js/**/*.js', '!' + assetsPath + 'build/js/lib'])
+        .pipe(sourcemaps.init())
+        .pipe(babel({
+            presets: [
+                ['env', {
+                    targets: {
+                        'browsers': ['safari >= 10', 'ie >= 10', 'last 2 versions']
+                    },
+
+                    // RequireJS is the main bundler, don't transform AMD modules at all
+                    modules: false
+                }],
+
+                // Without these settings file modules/main/filters/size.js won't work
+                ['minify',  {
+                    mangle: false,
+                    evaluate: false
+                }]
+            ]
+        }))
+        .pipe(sourcemaps.write('maps'))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/js'));
+});
+
+gulp.task('watch', function(){
+    watching = true;
+    gulp.watch([assetsPath+'css/**/*.*'], ['css']);
+});
+
+gulp.task('templates-html-minify', function() {
+    return gulp.src(assetsPath + '/build/templates/**/*.html')
+        .pipe(htmlmin({
+            collapseBooleanAttributes: false,
+            collapseInlineTagWhitespace: true,
+            collapseWhitespace: true,
+            conservativeCollapse: true,
+            minifyCSS: true,
+            minifyJS: true,
+            removeAttributeQuotes: true,
+            removeComments: true,
+            removeEmptyAttributes: true,
+            removeRedundantAttributes: true
+        }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/templates/'));
+});
+
+gulp.task('templates-app', function() {
+    return gulp.src(assetsPath + 'build/templates/app/**/*.html')
+        .pipe(templateCache('templates-app.js',
+            { module: 'templates-app', standalone: true, moduleSystem: 'RequireJS', root: 'static/templates/app' }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/js/cached-templates'));
+});
+
+gulp.task('templates-main', function() {
+    return gulp.src(assetsPath + 'build/templates/main/**/*.html')
+        .pipe(templateCache('templates-main.js',
+            { module: 'templates-main', standalone: true, moduleSystem: 'RequireJS', root: '/static/templates/main' }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/js/cached-templates'));
+
+});
+
+gulp.task('templates-include', function() {
+    return gulp.src(assetsPath + 'build/templates/include/**/*.html')
+        .pipe(templateCache('templates-include.js', {
+            module: 'templates-include', standalone: true, moduleSystem: 'RequireJS', root: 'static/templates/include' }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/js/cached-templates'));
+});
+
+gulp.task('templates-auth', function() {
+    return gulp.src(assetsPath + 'build/templates/auth/**/*.html')
+        .pipe(templateCache('templates-auth.js',
+            { module: 'templates-auth', standalone: true, moduleSystem: 'RequireJS', root: '/static/templates/auth' }))
+        .on('error', swallowError)
+        .pipe(gulp.dest(assetsPath + 'build/js/cached-templates'));
+});
+
+gulp.task('release', gulpsync.sync([
+    'clean',
+    'css',
+    'copy-files',
+    'edit-files',
+    'templates-html-minify',
+    'templates-app',
+    'templates-include',
+    'templates-main',
+    'templates-auth',
+    'js',
+    'babel',
+    'preset-modules-timestamp'
+]));
+
+gulp.task('default', ['copy-fonts', 'css', 'watch']);

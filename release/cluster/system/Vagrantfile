@@ -1,0 +1,169 @@
+# encoding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+
+currentDir    = File.dirname(File.expand_path(__FILE__))
+configs        = YAML.load_file("#{currentDir}/config.yaml")
+vagrantConfig = configs['configs'][configs['configs']['use']]
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+VAGRANTFILE_API_VERSION         = '2'
+ENV['LC_ALL']                   = 'en_US.UTF-8'
+
+Vagrant.configure( VAGRANTFILE_API_VERSION ) do |config|
+  config.vm.boot_timeout = 180
+
+  $script = <<-SCRIPT
+  echo 'Network information'
+  ifconfig
+  SCRIPT
+
+  #config.ssh.private_key_path =  ["ssh/id_rsa"]
+  config.vm.provision "file", source: "ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  config.vm.provision "file", source: "ssh/id_rsa.pub", destination: "~vagrant/id_rsa.pub"
+  config.vm.provision "shell", inline: "cat ~vagrant/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: $script
+
+  config.vm.define "postgresdb" do |postgresdb|
+    postgresdb.vm.hostname = "postgres"
+    postgresdb.vm.network "public_network", ip: vagrantConfig['postgres']['public_ip'], netmask: "255.255.255.0"
+
+    postgresdb.vm.provision "file", source: "postgres/config", destination: "~vagrant/"
+    postgresdb.vm.provision "shell", path: "postgres/bootstrap.sh"
+
+    postgresdb.vm.provider "virtualbox" do |v, override|
+      override.vm.box = "datadocs/base-server"
+      v.name = "postgres"
+      v.memory = vagrantConfig['postgres']['memory']
+      v.cpus = 1
+      v.gui = false
+    end
+
+    postgresdb.vm.provider "docker" do |docker|
+      docker.name = "postgres"
+      docker.build_dir = "./postgres"
+      docker.has_ssh = true
+      docker.build_args = [ '-t', 'postgres' ]
+    end
+  end
+
+  config.vm.define "rabbitmq" do |rabbitmq|
+    rabbitmq.vm.hostname = "rabbitmq"
+    rabbitmq.vm.network "public_network", ip: vagrantConfig['rabbitmq']['public_ip'], netmask: "255.255.255.0" 
+
+    rabbitmq.vm.provision "file", source: "rabbitmq/config", destination: "~vagrant/"
+    rabbitmq.vm.provision "shell", path: "rabbitmq/bootstrap.sh"
+ 
+    rabbitmq.vm.provider "virtualbox" do |v, override|
+      override.vm.box = "datadocs/base-server"
+      v.name = "rabbitmq"
+      v.memory = vagrantConfig['rabbitmq']['memory']
+      v.cpus = 1
+      v.gui = false
+    end
+   
+    rabbitmq.vm.provider "docker" do |docker|
+      docker.name = "rabbitmq"
+      docker.build_dir = "./rabbitmq"
+      docker.has_ssh = true
+      docker.build_args = [ '-t', 'rabbitmq' ]
+    end
+  end
+
+  config.vm.define "mongodb" do |mongodb|
+   mongodb.vm.hostname = "mongodb"
+   mongodb.vm.network "public_network", ip: vagrantConfig['mongodb']['public_ip'], netmask: "255.255.255.0"
+
+   mongodb.vm.provision "file", source: "mongodb/config", destination: "~vagrant/"
+   mongodb.vm.provision "shell", path: "mongodb/bootstrap.sh"
+
+   mongodb.vm.provider "virtualbox" do |v, override|
+     override.vm.box = "datadocs/base-server"
+     v.name = "mongodb"
+     v.memory = vagrantConfig['mongodb']['memory']
+     v.cpus = 1
+     v.gui = false
+   end
+
+   mongodb.vm.provider "docker" do |docker|
+     docker.name = "mongodb"
+     docker.build_dir = "./mongodb"
+     docker.has_ssh = true
+     docker.build_args = [ '-t', 'mongodb' ]
+   end
+  end
+
+  config.vm.define "nginx" do |nginx|
+    nginx.vm.hostname = "nginx"
+    nginx.vm.network "public_network", ip: vagrantConfig['nginx']['public_ip'], netmask: "255.255.255.0"
+    config.ssh.insert_key = false
+
+    nginx.vm.provision "shell", path: "nginx/bootstrap.sh"
+
+    nginx.vm.provider "virtualbox" do |v, override|
+      override.vm.box = "datadocs/base-server"
+      v.name = "nginx"
+      v.memory = vagrantConfig['nginx']['memory']
+      v.cpus = 1
+      v.gui = false
+    end
+
+    nginx.vm.provider "docker" do |docker|
+      docker.name = "nginx"
+      docker.build_dir = "./nginx"
+      docker.has_ssh = true
+      docker.build_args = [ '-t', 'nginx' ]
+    end
+  end
+
+  config.vm.define "elasticsearch" do |elasticsearch|
+    elasticsearch.vm.hostname = "elasticsearch"
+    elasticsearch.vm.network "public_network", ip: vagrantConfig['elasticsearch']['public_ip'], netmask: "255.255.255.0"
+    config.ssh.insert_key = false
+
+    elasticsearch.vm.provision "file", source: "elasticsearch/elasticsearch-5.3.1.tgz", destination: "~vagrant/elasticsearch-5.3.1.tgz"
+    elasticsearch.vm.provision "shell", path: "elasticsearch/bootstrap.sh"
+
+    elasticsearch.vm.provider "virtualbox" do |v, override|
+      override.vm.box = "datadocs/base-server"
+      v.name = "elasticsearch"
+      v.memory = vagrantConfig['elasticsearch']['memory']
+      v.cpus = 1
+      v.gui = false
+    end
+
+    elasticsearch.vm.provider "docker" do |docker|
+      docker.name = "elasticsearch"
+      docker.build_dir = "./elasticsearch"
+      docker.has_ssh = true
+      docker.build_args = [ '-t', 'elasticsearch' ]
+    end
+  end
+
+  config.vm.define "app" do |app|
+   app.vm.hostname = "app"
+   app.vm.network "public_network", ip: vagrantConfig['app']['public_ip'], netmask: "255.255.255.0"
+   config.ssh.insert_key = false
+  #    app.ssh.host = "192.168.1.200"
+
+   config.vm.provision "file", source: "app/deploy", destination: "~vagrant/"
+   app.vm.provision "shell", path: "app/bootstrap.sh"
+
+   app.vm.provider "virtualbox" do |v, override|
+     override.vm.box = "datadocs/base-server"
+     v.name = "app"
+     v.memory = vagrantConfig['app']['memory']
+     v.cpus = 1
+     v.gui = false
+   end
+
+   app.vm.provider "docker" do |docker|
+     docker.name = "app"
+     docker.build_dir = "./app"
+     docker.has_ssh = true
+     docker.build_args = [ '-t', 'app' ]
+   end
+  end
+end

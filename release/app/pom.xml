@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+ 
+  <parent>
+    <groupId>com.dataparse</groupId>
+    <artifactId>dataparse</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>release.app</artifactId>
+  <version>${project.version}</version>
+  <packaging>pom</packaging>
+  <name>release.app</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.dataparse</groupId>
+      <artifactId>module.dataparse</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+  </dependencies>
+
+  <modules>
+    <module>../../module/dataparse</module>
+  </modules>
+
+  <build>
+    <!--
+    <resources>
+      <resource>
+        <directory>src/main/webapp</directory>
+        <targetPath>assets</targetPath>
+      </resource>
+    </resources>
+    -->
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptor>src/assembly/assembly.xml</descriptor>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

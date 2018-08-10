@@ -1,0 +1,11 @@
+[
+    {"provider": "Warner", "data": "This week", "price": "182", "bucket": "$1.99-$2.98"},
+    {"provider": "Warner", "data": "Last week", "price": "183", "bucket": "$1.99-$2.98"},
+    {"provider": "Warner", "data": "This week", "price": "17", "bucket": "$2.99-$3.98"},
+    {"provider": "Warner", "data": "Last week", "price": "17", "bucket": "$2.99-$3.98"},
+
+    {"provider": "Disney", "data": "This week", "price": "42", "bucket": "$1.99-$2.98"},
+    {"provider": "Disney", "data": "Last week", "price": "11", "bucket": "$1.99-$2.98"},
+    {"provider": "Disney", "data": "This week", "price": "0", "bucket": "$2.99-$3.98"},
+    {"provider": "Disney", "data": "Last week", "price": "4", "bucket": "$2.99-$3.98"}
+]

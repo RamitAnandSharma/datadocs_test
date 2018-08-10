@@ -1,0 +1,53 @@
+# encoding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+
+currentDir    = File.dirname(File.expand_path(__FILE__))
+configs        = YAML.load_file("#{currentDir}/config.yaml")
+vagrantConfig = configs['configs'][configs['configs']['use']]
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+VAGRANTFILE_API_VERSION         = '2'
+ENV['LC_ALL']                   = 'en_US.UTF-8'
+
+Vagrant.configure( VAGRANTFILE_API_VERSION ) do |config|
+  config.vm.boot_timeout = 180
+
+  $script = <<-SCRIPT
+  echo 'Network information'
+  ifconfig
+  SCRIPT
+
+#  config.ssh.private_key_path =  ["ssh/id_rsa"]
+# config.vm.provision "file", source: "ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  config.vm.provision "file", source: "../../vagrant/ssh/id_rsa.pub", destination: "~vagrant/id_rsa.pub"
+  config.vm.provision "shell", inline: "cat ~vagrant/id_rsa.pub >> ~vagrant/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: $script
+
+  config.vm.define "base-server" do |app|
+    app.vm.hostname = "base-server"
+    app.vm.network "private_network", ip: "192.168.0.10", netmask: "255.255.255.0"
+    app.vm.network "public_network", :bridge => 'en0: Wi-Fi (AirPort)', ip: vagrantConfig['app']['public_ip'], netmask: "255.255.255.0"
+    config.ssh.insert_key = false
+ #    app.ssh.host = "192.168.1.200"
+
+    app.vm.provision "shell", path: "app/bootstrap.sh"
+
+    app.vm.provider "virtualbox" do |v, override|
+      override.vm.box = "bento/ubuntu-17.10"
+      v.name = "base-server"
+      v.memory = vagrantConfig['app']['memory']
+      v.cpus = 1
+      v.gui = false
+    end
+
+    app.vm.provider "docker" do |docker|
+      docker.name = "app"
+      docker.build_dir = "./app"
+      docker.has_ssh = true
+      docker.build_args = [ '-t', 'app' ]
+    end
+  end
+end
