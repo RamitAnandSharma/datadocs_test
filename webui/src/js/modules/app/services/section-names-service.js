@@ -4,14 +4,12 @@ define(['./module'], function(module) {
           MY_DATA: 0,
           USER_SETTINGS: 1,
           SEARCH: 2,
-          TEAM_MEMBERS: 3,
       };
 
       var SECTION_NAMES = {
           MY_DATA: 'main.landing.my_data',
           USER_SETTINGS: 'main.landing.user_settings',
-          SEARCH: 'main.landing.search',
-          TEAM_MEMBERS: 'main.landing.team_members'
+          SEARCH: 'main.landing.search'
       };
 
       function getKeyFromObjByValue(value, obj) {
