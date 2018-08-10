@@ -311,6 +311,10 @@ define([
                     url: 'user-settings',
                     templateUrl: '/static/templates/main/user-settings.html'
                 })
+                .state('main.landing.team_members', {
+                    url: 'team_members',
+                    templateUrl: '/static/templates/main/team_members.html'
+                })
                 .state('main.landing.search', {
                     url: 'search?s',
                     templateUrl: '/static/templates/main/search.html',
